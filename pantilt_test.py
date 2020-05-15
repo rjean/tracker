@@ -13,12 +13,12 @@ class TestPanTilt(unittest.TestCase):
     
     def test_horizontal_sweep(self):
         for angle in range(-90,90):
-            pantilt.set_horizontal_angle(angle)
+            pantilt.set_raw_horizontal_angle(angle)
             sleep(0.1)
     
     def test_vertical_sweep(self):
         for angle in range(0,60):
-            pantilt.set_vertical_angle(angle)
+            pantilt.set_raw_vertical_angle(angle)
             sleep(0.1)
         
 if __name__ == '__main__':
