@@ -12,6 +12,9 @@ class TestPanTilt(unittest.TestCase):
     def test_center(self):
         pantilt.center()
 
+    def test_power_off(self):
+        pantilt.power_off()
+
     def circle(self):
         for x in np.arange(0,2*math.pi, math.pi/180):
             h_rad = math.sin(x) / 5
@@ -21,12 +24,35 @@ class TestPanTilt(unittest.TestCase):
             pantilt.set_horizontal_angle(h)
             pantilt.set_vertical_angle(v)
             sleep(0.01)
+
+    def test_square(self):
+        pantilt.center()
+        sleep(1)
+        for _ in range(0,10):
+            self.square()
+
+    def square(self):
+        pantilt.set_horizontal_angle(-10)
+        pantilt.set_vertical_angle(-10)
+        for h in np.arange(-10,10):
+            pantilt.set_horizontal_angle(h)
+            sleep(0.1)
+        for v in np.arange(-10,10):
+            pantilt.set_vertical_angle(v)
+            sleep(0.1)
+        for h in np.arange(10,-10,-1):
+            pantilt.set_horizontal_angle(h)
+            sleep(0.1)
+        for v in np.arange(10,-10,-1):
+            pantilt.set_vertical_angle(v)
+            sleep(0.1)            
     
     def test_circle(self):
         pantilt.center()
         sleep(1)
         for _ in range(0,10):
             self.circle()
+        pantile.center()
 
     def test_horizontal_sweep(self):
         for angle in range(-90,90):
