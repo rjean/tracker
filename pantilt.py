@@ -1,5 +1,6 @@
 #sudo pigpiod to instanciate the Daemon.
 import pigpio
+import argparse
 
 pi = pigpio.pi()
 
@@ -10,6 +11,10 @@ HORIZONTAL_OFFSET=3 # Manually calibrated
 VERTICAL_OFFSET=-17 # Manually calibrated
 
 
+def power_off():
+    pi.set_servo_pulsewidth(HORIZONTAL_SERVO_GPIO, 0)
+    pi.set_servo_pulsewidth(VERTICAL_SERVO_GPIO, 0)
+    
 def center():
     set_raw_horizontal_angle(0+HORIZONTAL_OFFSET)
     set_raw_vertical_angle(0+VERTICAL_OFFSET)
@@ -45,3 +50,9 @@ def set_raw_vertical_angle(angle):
     pi.set_servo_pulsewidth(VERTICAL_SERVO_GPIO, angle_to_pwm(angle))
 
 
+def main():
+    print("Hello World!")
+
+if __name__ == "__main__":
+    main()
+    
