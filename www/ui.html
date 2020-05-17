@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!-- # Based on the following tutorial / documentation: 
+    https://websockets.readthedocs.io/en/stable/intro.html -->
+<html>
+    <head>
+        <title>WebSocket demo</title>
+        <style type="text/css">
+            body {
+                font-family: "Courier New", sans-serif;
+                text-align: center;
+            }
+            .buttons {
+                font-size: 4em;
+                display: flex;
+                justify-content: center;
+            }
+            .button, .horizontal_angle, .vertical_angle {
+                line-height: 1;
+                padding: 2rem;
+                margin: 2rem;
+                border: medium solid;
+                min-height: 1em;
+                min-width: 1em;
+            }
+            .button {
+                cursor: pointer;
+                user-select: none;
+            }
+            .left {
+                color: red;
+            }
+            .right {
+                color: green;
+            }
+            .horizontal_angle {
+                min-width: 2em;
+            }
+            .vertical_angle {
+                min-width: 2em;
+            }
+            .state {
+                font-size: 2em;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="buttons">
+            <div class="left button">-</div>
+            <div class="horizontal_angle">?</div>
+            <div class="right button">+</div>
+        </div>
+        <div class="buttons">
+            <div class="up button">-</div>
+            <div class="vertical_angle">?</div>
+            <div class="down button">+</div>
+        </div>
+        <div class="state">
+            <span class="users">?</span> online
+        </div>
+        <script>
+            document.onkeydown = checkKey;
+
+            function checkKey(e) {
+            
+                e = e || window.event;
+            
+                if (e.keyCode == '38') {
+                    // up arrow
+                    websocket.send(JSON.stringify({action: 'up'}));
+                }
+                else if (e.keyCode == '40') {
+                    // down arrow
+                    websocket.send(JSON.stringify({action: 'down'}));
+                }
+                else if (e.keyCode == '37') {
+                   // left arrow
+                   websocket.send(JSON.stringify({action: 'left'}));
+                }
+                else if (e.keyCode == '39') {
+                   // right arrow
+                   websocket.send(JSON.stringify({action: 'right'}));
+                }
+            
+            }
+            var left = document.querySelector('.left'),
+                right = document.querySelector('.right'),
+                up = document.querySelector('.up'),
+                down = document.querySelector('.down'),
+                horizontal_angle = document.querySelector('.horizontal_angle'),
+                vertical_angle = document.querySelector('.vertical_angle'),
+                users = document.querySelector('.users'),
+                websocket = new WebSocket("ws://10.0.0.206:6789/");
+            left.onclick = function (event) {
+                websocket.send(JSON.stringify({action: 'left'}));
+            }
+            right.onclick = function (event) {
+                websocket.send(JSON.stringify({action: 'right'}));
+            }
+            up.onclick = function (event) {
+                websocket.send(JSON.stringify({action: 'up'}));
+            }
+            down.onclick = function (event) {
+                websocket.send(JSON.stringify({action: 'down'}));
+            }
+            websocket.onmessage = function (event) {
+                data = JSON.parse(event.data);
+                switch (data.type) {
+                    case 'state':
+                        horizontal_angle.textContent = data.horizontal_angle;
+                        vertical_angle.textContent = data.vertical_angle;
+                        break;
+                    case 'users':
+                        users.textContent = (
+                            data.count.toString() + " user" +
+                            (data.count == 1 ? "" : "s"));
+                        break;
+                    default:
+                        console.error(
+                            "unsupported event", data);
+                }
+            };
+        </script>
+    </body>
+</html>
