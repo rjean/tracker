@@ -10,17 +10,23 @@
                 text-align: center;
             }
             .buttons {
-                font-size: 4em;
+                font-size: 2em;
                 display: flex;
                 justify-content: center;
             }
+            .horizontal_buttons{
+                float: left;
+            }
+            .vertical_buttons{
+                float: right
+            }
             .button, .horizontal_angle, .vertical_angle {
                 line-height: 1;
-                padding: 2rem;
-                margin: 2rem;
+                padding: 1rem;
+                margin: 1rem;
                 border: medium solid;
-                min-height: 1em;
-                min-width: 1em;
+                min-height: 0.5em;
+                min-width: 0.5em;
             }
             .button {
                 cursor: pointer;
@@ -41,15 +47,32 @@
             .state {
                 font-size: 2em;
             }
+            #videoCanvas {
+                        /* Always stretch the canvas to 640x480, regardless of its
+                        internal size. */
+                        width: 640px;
+                        height: 480px;
+                }
         </style>
     </head>
     <body>
-        <div class="buttons">
+        <div class="video">
+            <canvas id="videoCanvas" width="640" height="480">
+                <p>
+                        Please use a browser that supports the Canvas Element, like
+                        <a href="http://www.google.com/chrome">Chrome</a>,
+                        <a href="http://www.mozilla.com/firefox/">Firefox</a>,
+                        <a href="http://www.apple.com/safari/">Safari</a> or Internet Explorer 10
+                </p>
+            </canvas>
+            </div>
+        <div class="controls">
+        <div class="buttons horizontal_buttons">
             <div class="left button">-</div>
             <div class="horizontal_angle">?</div>
             <div class="right button">+</div>
         </div>
-        <div class="buttons">
+        <div class="buttons vertical_buttons">
             <div class="up button">-</div>
             <div class="vertical_angle">?</div>
             <div class="down button">+</div>
@@ -57,6 +80,23 @@
         <div class="state">
             <span class="users">?</span> online
         </div>
+                <!-- The Canvas size specified here is the "initial" internal resolution. jsmpeg will
+                change this internal resolution to whatever the source provides. The size the
+                canvas is displayed on the website is dictated by the CSS style.
+        -->
+        </div>
+
+        <script type="text/javascript" src="jsmpg.js"></script>
+        <script type="text/javascript">
+                // Show loading notice
+                var canvas = document.getElementById('videoCanvas');
+                var ctx = canvas.getContext('2d');
+                ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
+
+                // Setup the WebSocket connection and start the player
+                var client = new WebSocket('ws://' + window.location.hostname + ':8084/');
+                var player = new jsmpeg(client, {canvas:canvas});
+        </script>
         <script>
             document.onkeydown = checkKey;
 
