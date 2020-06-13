@@ -72,6 +72,9 @@ async def counter(websocket, path):
                 STATE["vertical_angle"] -= 0.5
                 pantilt.set_vertical_angle(STATE["vertical_angle"])
                 await notify_state()
+            elif data["action"] == "off":
+                pantilt.power_off()
+                await notify_state()
             else:
                 logging.error("unsupported event: {}", data)
     finally:
