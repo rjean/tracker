@@ -5,6 +5,10 @@ import math
 import numpy as np
 class TestPanTilt(unittest.TestCase):
 
+    def test_horizontal_position_to_angle(self):
+        angle = pantilt.horizontal_position_to_angle(250, 800)
+        self.assertAlmostEquals(round(angle,3),15.594)
+
     def test_angle_to_pwm(self):
         self.assertAlmostEquals(pantilt.angle_to_pwm(-90),500)
         self.assertAlmostEquals(pantilt.angle_to_pwm(90),2500)
@@ -31,6 +35,17 @@ class TestPanTilt(unittest.TestCase):
         for _ in range(0,2):
             self.square()
 
+    def test_keypoints(self):
+        # On a target, on the wall. Camera distance = 800 mm
+        angle = pantilt.horizontal_position_to_angle(215.9/2, 600)
+        # Aiming for the edge of a 8 1/2 x 11 sheet centered at 800mm
+        pantilt.set_vertical_angle(0)
+        pantilt.set_horizontal_angle(0)
+        sleep(1)
+        pantilt.set_horizontal_angle(angle)
+        sleep(1)
+        pantilt.set_horizontal_angle(-angle)
+
     def square(self):
         pantilt.set_horizontal_angle(-10)
         pantilt.set_vertical_angle(-10)
@@ -54,6 +69,9 @@ class TestPanTilt(unittest.TestCase):
             self.circle()
         pantilt.center()
 
+    def test_horizontal_45(self):
+        pantilt.set_horizontal_angle(45)
+        
     def test_horizontal_sweep(self):
         for angle in range(-90,90):
             pantilt.set_horizontal_angle(angle)

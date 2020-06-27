@@ -1,6 +1,7 @@
 #sudo pigpiod to instanciate the Daemon.
 import pigpio
 import argparse
+import math
 
 pi = pigpio.pi()
 
@@ -9,6 +10,8 @@ VERTICAL_SERVO_GPIO=16
 
 HORIZONTAL_OFFSET=3 # Manually calibrated
 VERTICAL_OFFSET=-17 # Manually calibrated
+
+CAMERA_PAN_TILT_HORIZONTAL_DISTANCE=130 # millimiters
 
 
 def power_off():
@@ -48,6 +51,14 @@ def set_raw_horizontal_angle(angle):
 
 def set_raw_vertical_angle(angle):
     pi.set_servo_pulsewidth(VERTICAL_SERVO_GPIO, angle_to_pwm(angle))
+
+def horizontal_position_to_angle(position, distance_from_camera):
+    p = position
+    d = CAMERA_PAN_TILT_HORIZONTAL_DISTANCE
+    l = distance_from_camera + d
+    angle_rad = math.asin(p/l)
+    angle_deg = angle_rad / math.pi * 180 
+    return angle_deg
 
 
 def main():
