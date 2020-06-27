@@ -1,0 +1,3 @@
+[submodule "pistreaming"]
+	path = pistreaming
+	url = https://github.com/rjean/pistreaming.git
