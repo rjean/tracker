@@ -28,7 +28,7 @@ class TestPanTilt(unittest.TestCase):
     def test_square(self):
         pantilt.center()
         sleep(1)
-        for _ in range(0,10):
+        for _ in range(0,2):
             self.square()
 
     def square(self):
@@ -50,9 +50,9 @@ class TestPanTilt(unittest.TestCase):
     def test_circle(self):
         pantilt.center()
         sleep(1)
-        for _ in range(0,10):
+        for _ in range(0,2):
             self.circle()
-        pantile.center()
+        pantilt.center()
 
     def test_horizontal_sweep(self):
         for angle in range(-90,90):
