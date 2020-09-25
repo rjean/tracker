@@ -8,7 +8,7 @@ pi = pigpio.pi()
 HORIZONTAL_SERVO_GPIO=13
 VERTICAL_SERVO_GPIO=12
 
-HORIZONTAL_OFFSET=0 # Manually calibrated
+HORIZONTAL_OFFSET=-5 # Manually calibrated
 VERTICAL_OFFSET=-17 # Manually calibrated
 
 CAMERA_PAN_TILT_HORIZONTAL_DISTANCE=130 # millimiters
