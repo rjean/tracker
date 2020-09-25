@@ -23,8 +23,13 @@ class TestRealTimeCommunication(unittest.TestCase):
         rtcom.announce()
         sleep(0.1)
         self.assertTrue("test_device" in rtcom.devices)
+        rtcom.stop()
 
     def test_timeout(self):
         rtcom = RealTimeCommunication()
         sleep(1)
-        self.assertEqual(rtcom.listen_thread.miss_counter,9) 
+        self.assertEqual(rtcom.listen_thread.miss_counter,9)
+        rtcom.stop() 
+
+if __name__ == '__main__':
+    unittest.main()

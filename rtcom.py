@@ -30,9 +30,11 @@ class RealTimeCommunication:
         data = json_message.encode('utf-8')
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(data, ("255.255.255.255", port))
+        sock.close()
 
     def stop(self):
         self.listen_thread.enabled=False
+        self.listen_thread.join()
 
     class Listen(threading.Thread):
         def __init__(self, rtcom, port=5999, hostname=None):
@@ -63,6 +65,7 @@ class RealTimeCommunication:
                     print("received message: %s" % self.json_data)
                 except:
                     self.miss_counter+=1
+            self.sock.close()
                 #print(addr)
 
 #rtcom = RealTimeCommunication()
