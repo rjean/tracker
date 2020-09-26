@@ -157,7 +157,7 @@ class RealTimeCommunicationListener(threading.Thread):
     def run(self):
         while self.enabled:
             try:
-                data, addr = self.sock.recvfrom(65000) # buffer size is 1024 bytes
+                data, addr = self.sock.recvfrom(1500) # buffer size is 1024 bytes
                 device, endpoint, data, encoding, id, sequence, max_sequence = read_message(data)
                 if device not in self.devices:
                     self.devices[device] = Device(device, addr)
@@ -190,13 +190,9 @@ class RealTimeCommunicationListener(threading.Thread):
                             input_buffer[i*1000:i*1000+len(data)]=data
                             message_length+=len(data)
                         self.devices[device].endpoints[endpoint].data = input_buffer[0:message_length]
-                        
-
-
-
-                                              
+                       
                 self.miss_counter=0
-                print(f"{device}, {endpoint}, {encoding}, {len(data)}, {id},{sequence}, {max_sequence}")
+                print(f"{device}, {endpoint}, {encoding}, {id},{sequence}, {max_sequence}")
             except:
                 self.miss_counter+=1
         self.sock.close()
