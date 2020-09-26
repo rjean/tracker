@@ -2,7 +2,7 @@
 import unittest
 #import thread
 from rtcom import *
-
+import os
 from time import sleep
 #Test for coordinates transformations. 
 class TestRealTimeCommunication(unittest.TestCase):
@@ -15,42 +15,60 @@ class TestRealTimeCommunication(unittest.TestCase):
             self.assertEqual(rtcom.listen_thread.miss_counter,9)
 
     def test_device_message(self):
-        with RealTimeCommunication("turret.local") as rtcom:
+        with RealTimeCommunication("test.device") as rtcom:
             rtcom.broadcast_endpoint("heartbeat", 10)
             sleep(0.1) 
-            self.assertEqual(rtcom.listen_thread.devices["turret.local"].endpoints["heartbeat"].data, 10)
-            self.assertEqual(rtcom["turret.local"]["heartbeat"],10)
+            self.assertEqual(rtcom.listen_thread.devices["test.device"].endpoints["heartbeat"].data, 10)
+            self.assertEqual(rtcom["test.device"]["heartbeat"],10)
             rtcom.broadcast_endpoint("heartbeat", 11)
             sleep(0.1) 
-            self.assertEqual(rtcom.listen_thread.devices["turret.local"].endpoints["heartbeat"].data, 11)
-            self.assertEqual(rtcom["turret.local"]["heartbeat"],11)
+            self.assertEqual(rtcom.listen_thread.devices["test.device"].endpoints["heartbeat"].data, 11)
+            self.assertEqual(rtcom["test.device"]["heartbeat"],11)
             rtcom.broadcast_endpoint("binary_data", bytes([1,2,3,4]), encoding="binary")
             sleep(0.1) 
-            self.assertEqual(rtcom["turret.local"]["binary_data"],bytes([1,2,3,4]))
+            self.assertEqual(rtcom["test.device"]["binary_data"],bytes([1,2,3,4]))
         
     def test_build_message_yaml(self):
-        message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")
-        self.assertEqual(len(message),34)
+        message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")[0]
+        self.assertEqual(len(message),40)
         self.assertIsInstance(message, bytearray)
 
+    def test_build_big_message(self):
+        random_data=bytearray(os.urandom(12345)) 
+        messages = build_message("device", "endpoint", random_data, "binary")
+        input_buffer = None
+        message_length=0
+        for message in messages:
+            device, endpoint, data, encoding, id, sequence, max_sequence = read_message(message)
+            if input_buffer is None:
+                input_buffer=bytearray(1000*max_sequence)
+            input_buffer[sequence*1000:sequence*1000+len(data)]=data
+            message_length+=len(data)
+        received_data=input_buffer[0:message_length]
+        self.assertEqual(len(received_data),12345)
+        self.assertEqual(received_data, random_data)
+
+
     def test_big_message(self):
-        with RealTimeCommunication("turret.local") as rtcom:
-            big_message = bytearray(60000)
+        with RealTimeCommunication("test.device") as rtcom:
+            big_message = bytearray(os.urandom(60000)) 
             rtcom.broadcast_endpoint("image_data", big_message, encoding="binary")
             sleep(0.1)
-            self.assertEqual(len(rtcom["turret.local"]["image_data"]),60000)
+            self.assertEqual(len(rtcom["test.device"]["image_data"]),60000)
 
 
     def test_read_raw_message(self):
-        message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")
+        message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")[0]
         header_line, data = read_raw_message(message)
-        self.assertEqual(header_line,"device/endpoint:yaml")
+        self.assertEqual(header_line,"device/endpoint:yaml:0:0:1")
         self.assertIsInstance(data, bytearray)
         self.assertEqual(len(data),13)
 
+
+
     def test_read_message(self):
-        message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")
-        device, endpoint, data, encoding = read_message(message)
+        message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")[0]
+        device, endpoint, data, encoding, _, _, _ = read_message(message)
         self.assertEqual(device, "device")
         self.assertEqual(endpoint, "endpoint")
         self.assertEqual(encoding,"yaml")

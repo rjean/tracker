@@ -13,29 +13,41 @@ def read_raw_message(data):
 
 def read_message(data):
     header, data = read_raw_message(data)
-    #'device/endpoint:encoding'
-    match = re.search("(.*?)/(.*?):(.*)", header)
+    #'device/endpoint:encoding:id:sequence'
+    match = re.search("(.*?)/(.*?):(.*?):(.*?):(.*?):(.*)", header)
     device = match[1]
     endpoint = match[2]
     encoding = match[3]
+    id = match[4]
+    sequence = match[5]
+    max_sequence = match[6]
     if encoding=="yaml":
         data = yaml.load(data.decode("utf-8"))
-    return device, endpoint, data, encoding
+    return device, endpoint, data, encoding, int(id), int(sequence), int(max_sequence)
 
-def build_message(device_name, endpoint, data, encoding):
-        header = bytes(f"{device_name}/{endpoint}:{encoding}\n", "utf-8")
-        if encoding=="yaml":
-            encoded_data = bytes(yaml.dump(data), "utf-8")
-        elif encoding=="binary":
-            encoded_data = data
-        else:
-            raise ValueError("Please specify a supported encoding methods. (binary or yaml)")
+def build_message(device_name, endpoint, data, encoding, id=0, max_size=1000):
+    messages = []
+    if encoding=="yaml":
+        encoded_data = bytes(yaml.dump(data), "utf-8")
+    elif encoding=="binary":
+        encoded_data = data
+    else:
+        raise ValueError("Please specify a supported encoding methods. (binary or yaml)")
+    number_of_messages = int(len(encoded_data)/max_size)+1
+    if len(encoded_data)%max_size==0:
+        number_of_messages-=1
 
-        size = len(header) + len(encoded_data)
+    remaining_bytes = len(encoded_data)
+    
+    for sequence in range(number_of_messages):
+        header = bytes(f"{device_name}/{endpoint}:{encoding}:{id}:{sequence}:{number_of_messages}\n", "utf-8")
+        size = len(header) + min(remaining_bytes, max_size)
         message = bytearray(size)
         message[0:len(header)]=header
-        message[len(header):]=encoded_data
-        return message
+        message[len(header):size]=encoded_data[sequence*max_size:sequence*max_size+min(remaining_bytes, max_size)]
+        remaining_bytes=remaining_bytes-max_size
+        messages.append(message)
+    return messages
 
 class Device():
     def __init__(self, name, addr):
@@ -54,6 +66,8 @@ class Endpoint():
         self.name = name
         self.encoding = encoding
         self.data = data
+        self.next_data = {}
+        self.transmission_id = -1 #Current transmission id
 
     
 
@@ -99,8 +113,13 @@ class RealTimeCommunication:
         sock.close()
 
     def broadcast_endpoint(self, endpoint, data, encoding="yaml"):
-        message = build_message(self.device_name, endpoint, data, encoding)
-        self.broadcast(message)
+        if endpoint not in self.endpoints:
+            self.endpoints[endpoint]=0
+        else:
+            self.endpoints[endpoint]+=1
+        packets = build_message(self.device_name, endpoint, data, encoding, id=self.endpoints[endpoint])
+        for packet in packets:
+            self.broadcast(packet)
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.listen:
@@ -128,23 +147,45 @@ class RealTimeCommunicationListener(threading.Thread):
         while self.enabled:
             try:
                 data, addr = self.sock.recvfrom(65000) # buffer size is 1024 bytes
-                device, endpoint, data, encoding = read_message(data)
+                device, endpoint, data, encoding, id, sequence, max_sequence = read_message(data)
                 if device not in self.devices:
                     self.devices[device] = Device(device, addr)
                 
-                if endpoint not in self.devices[device].endpoints:
-                    self.devices[device].endpoints[endpoint] = Endpoint(endpoint, encoding, data)
+                if max_sequence==1:
+                    if endpoint not in self.devices[device].endpoints:
+                        self.devices[device].endpoints[endpoint] = Endpoint(endpoint, encoding, data)
+                    else:
+                        self.devices[device].endpoints[endpoint].data = data
                 else:
-                    self.devices[device].endpoints[endpoint].data = data
+                    #Handle big messages
+                    if endpoint not in self.devices[device].endpoints:
+                        self.devices[device].endpoints[endpoint] = Endpoint(endpoint, encoding)
                     
-                # data_dict = yaml.load(data, Loader=yaml.Loader)
-                # self.data_dict = data_dict
-                # if "announce" in data_dict:
-                #    device_name = data_dict["announce"]["device_name"]
-                #    if device_name not in self.devices:
+                    if id != self.devices[device].endpoints[endpoint].transmission_id:
+                        self.devices[device].endpoints[endpoint].next_data={}
+                        self.devices[device].endpoints[endpoint].transmission_id=id
+                    self.devices[device].endpoints[endpoint].next_data[sequence] = data
+                    ready=True
+                    for i in range(0,max_sequence):
+                        if i not in self.devices[device].endpoints[endpoint].next_data:
+                            ready=False
+                            break
+                    message_length=0
+                    if ready:
+                        print("ready")
+                        input_buffer=bytearray(1000*max_sequence)
+                        for i in range(0,max_sequence):
+                            data = self.devices[device].endpoints[endpoint].next_data[i]
+                            input_buffer[i*1000:i*1000+len(data)]=data
+                            message_length+=len(data)
+                        self.devices[device].endpoints[endpoint].data = input_buffer[0:message_length]
+                        
+
+
+
                                               
                 self.miss_counter=0
-                print(f"{device}, {endpoint}, {encoding}, {len(data)}")
+                print(f"{device}, {endpoint}, {encoding}, {len(data)}, {id},{sequence}, {max_sequence}")
             except:
                 self.miss_counter+=1
         self.sock.close()
