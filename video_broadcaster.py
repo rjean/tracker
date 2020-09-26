@@ -1,4 +1,3 @@
-#https://raspberrypi.stackexchange.com/questions/34318/pil-image-from-picamera-capture
 import io
 import time
 import cv2
@@ -10,11 +9,14 @@ import detect
 from PIL import Image, ImageDraw
 import numpy as np
 
+import cv2, queue, threading, time
+
+from utils import VideoCapture
 
 with RealTimeCommunication("turret.local") as rtcom:
     beat=0
-    P = 0.02
-    cap = cv2.VideoCapture(0)
+    P = 0.05
+    cap = VideoCapture(0)
     #cap.set(cv2.CAP_PROP_BUFFERSIZE,3)
 
     #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 300)
@@ -26,18 +28,23 @@ with RealTimeCommunication("turret.local") as rtcom:
     horizontal_angle=0
     vertical_angle=0
     hysteresis = 10
+    lost=0
+
     first_pass = True
     labels = load_labels("coco_labels.txt") 
 
     while(True):
-        ret, frame = cap.read()
+        start = time.perf_counter()
+        frame = cap.read()
+        print(f"Capture time: {time.perf_counter()-start}")
+        start = time.perf_counter()
         
         pil_frame = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         
         start = time.perf_counter()
 
         scale = detect.set_input(interpreter, pil_frame.size,
-                           lambda size: pil_frame.resize(size, Image.ANTIALIAS))
+                           lambda size: pil_frame.resize(size, Image.NEAREST))
         
         print(f"Scaling time: {time.perf_counter()-start}")
         start = time.perf_counter()
@@ -57,18 +64,20 @@ with RealTimeCommunication("turret.local") as rtcom:
             draw_objects(ImageDraw.Draw(pil_frame), objs, labels)
             frame = np.array(pil_frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        
-        
-        
-
-        
+                
         max_score=0
+        lost=lost+1
         for obj in objs:
             if obj.id== 0 and obj.score > 0.4:
                 if obj.score > max_score:
                     center_h = (obj.bbox.xmax+obj.bbox.xmin)/2
                     center_v = (obj.bbox.ymax+obj.bbox.ymin)/2
                     max_score = obj.score
+                    lost=0
+
+        if lost > 10:
+            horizontal_angle=0
+            vertical_angle=0
 
         if abs(center_h-320)> hysteresis:        
             horizontal_angle = horizontal_angle + P*(center_h-320)
@@ -84,7 +93,7 @@ with RealTimeCommunication("turret.local") as rtcom:
         start = time.perf_counter()
 
         rtcom.broadcast_endpoint("jpeg_image", bytes(jpg_image), encoding="binary", addr="10.0.0.224")
-        rtcom.broadcast_endpoint("heartbeat", beat)
+        #rtcom.broadcast_endpoint("heartbeat", beat)
 
         print(f"Network time: {time.perf_counter()-start}")
         start = time.perf_counter()
