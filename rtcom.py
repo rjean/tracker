@@ -183,7 +183,7 @@ class RealTimeCommunicationListener(threading.Thread):
                             break
                     message_length=0
                     if ready:
-                        print("ready")
+                        #print("ready")
                         input_buffer=bytearray(1000*max_sequence)
                         for i in range(0,max_sequence):
                             data = self.devices[device].endpoints[endpoint].next_data[i]
@@ -192,7 +192,7 @@ class RealTimeCommunicationListener(threading.Thread):
                         self.devices[device].endpoints[endpoint].data = input_buffer[0:message_length]
                        
                 self.miss_counter=0
-                print(f"{device}, {endpoint}, {encoding}, {id},{sequence}, {max_sequence}")
+                #print(f"{device}, {endpoint}, {encoding}, {id},{sequence}, {max_sequence}")
             except:
                 self.miss_counter+=1
         self.sock.close()

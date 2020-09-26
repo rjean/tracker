@@ -41,7 +41,10 @@ interfacing options->camera->enable the camera
 To start the camera, ising pistreaming:
 
 ```
-cd pistreaming
+cd pistreamingls
 python3 server.py&
 ``
+
+# AI 
+curl -OL "https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite"
 
