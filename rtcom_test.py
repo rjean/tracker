@@ -21,7 +21,7 @@ class TestRealTimeCommunication(unittest.TestCase):
             self.assertEqual(rtcom.listen_thread.devices["test.device"].endpoints["heartbeat"].data, 10)
             self.assertEqual(rtcom["test.device"]["heartbeat"],10)
             rtcom.broadcast_endpoint("heartbeat", 11)
-            sleep(0.1) 
+            sleep(0.1)  
             self.assertEqual(rtcom.listen_thread.devices["test.device"].endpoints["heartbeat"].data, 11)
             self.assertEqual(rtcom["test.device"]["heartbeat"],11)
             rtcom.broadcast_endpoint("binary_data", bytes([1,2,3,4]), encoding="binary")
