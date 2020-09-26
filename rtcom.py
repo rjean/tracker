@@ -58,7 +58,7 @@ class Endpoint():
     
 
 class RealTimeCommunication:
-    def __init__(self, device_name=None):
+    def __init__(self, device_name=None, listen=True):
         if device_name is None:
             self.device_name = socket.gethostname()
         else:
@@ -68,11 +68,13 @@ class RealTimeCommunication:
         except:
             addr = "127.0.0.1"
 
+        self.listen=listen
         self.this_device = Device(self.device_name, addr)
 
         self.endpoints = {}
-        self.listen_thread = RealTimeCommunicationListener(self)
-        self.listen_thread.start()
+        if listen:
+            self.listen_thread = RealTimeCommunicationListener(self)
+            self.listen_thread.start()
         self.devices = {}
 
     def __getitem__(self, key):
@@ -101,8 +103,9 @@ class RealTimeCommunication:
         self.broadcast(message)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.listen_thread.enabled=False
-        self.listen_thread.join()
+        if self.listen:
+            self.listen_thread.enabled=False
+            self.listen_thread.join()
 
 
 class RealTimeCommunicationListener(threading.Thread):
@@ -124,7 +127,7 @@ class RealTimeCommunicationListener(threading.Thread):
     def run(self):
         while self.enabled:
             try:
-                data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
+                data, addr = self.sock.recvfrom(65000) # buffer size is 1024 bytes
                 device, endpoint, data, encoding = read_message(data)
                 if device not in self.devices:
                     self.devices[device] = Device(device, addr)

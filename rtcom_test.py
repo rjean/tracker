@@ -33,6 +33,14 @@ class TestRealTimeCommunication(unittest.TestCase):
         self.assertEqual(len(message),34)
         self.assertIsInstance(message, bytearray)
 
+    def test_big_message(self):
+        with RealTimeCommunication("turret.local") as rtcom:
+            big_message = bytearray(60000)
+            rtcom.broadcast_endpoint("image_data", big_message, encoding="binary")
+            sleep(0.1)
+            self.assertEqual(len(rtcom["turret.local"]["image_data"]),60000)
+
+
     def test_read_raw_message(self):
         message = build_message("device", "endpoint", {"hello" : "world"}, "yaml")
         header_line, data = read_raw_message(message)
