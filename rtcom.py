@@ -61,6 +61,9 @@ class Device():
     def __getitem__(self, key):
         return self.endpoints[key].data
 
+    def __contains__(self, key):
+        return key in self.endpoints
+
 class Endpoint():
     def __init__(self, name, encoding, data = None):
         self.name = name
@@ -96,6 +99,9 @@ class RealTimeCommunication:
 
     def __enter__(self):
         return self
+
+    def __contains__(self, key):
+        return key in self.listen_thread.devices
         
     def announce(self):
         message = {"announce" : 
@@ -103,23 +109,28 @@ class RealTimeCommunication:
                          "endpoints" : self.endpoints}}
         self.broadcast(message)
 
-    def broadcast(self, data, port=5999):
+    def broadcast(self, packets, port=5999, addr=None):
         sock = socket.socket(socket.AF_INET, # Internet
                              socket.SOCK_DGRAM) # UDP
         #encoded_message = yaml.dump(message)
         #data = encoded_message.encode('utf-8')
+        if addr is None:
+            addr= "255.255.255.255"
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(data, ("255.255.255.255", port))
+        for data in packets:
+            sock.sendto(data, (addr, port))
         sock.close()
 
-    def broadcast_endpoint(self, endpoint, data, encoding="yaml"):
+    def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
         if endpoint not in self.endpoints:
             self.endpoints[endpoint]=0
         else:
             self.endpoints[endpoint]+=1
         packets = build_message(self.device_name, endpoint, data, encoding, id=self.endpoints[endpoint])
-        for packet in packets:
-            self.broadcast(packet)
+        self.broadcast(packets, addr=addr)
+        #for packet in packets:
+        #    self.broadcast(packet)
+        
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.listen:
