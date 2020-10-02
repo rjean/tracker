@@ -17,15 +17,15 @@ class TestRealTimeCommunication(unittest.TestCase):
     def test_device_message(self):
         with RealTimeCommunication("test.device") as rtcom:
             rtcom.broadcast_endpoint("heartbeat", 10)
-            sleep(0.1) 
+            sleep(0.2) 
             self.assertEqual(rtcom.listen_thread.devices["test.device"].endpoints["heartbeat"].data, 10)
             self.assertEqual(rtcom["test.device"]["heartbeat"],10)
             rtcom.broadcast_endpoint("heartbeat", 11)
-            sleep(0.1)  
+            sleep(0.2)  
             self.assertEqual(rtcom.listen_thread.devices["test.device"].endpoints["heartbeat"].data, 11)
             self.assertEqual(rtcom["test.device"]["heartbeat"],11)
             rtcom.broadcast_endpoint("binary_data", bytes([1,2,3,4]), encoding="binary")
-            sleep(0.1) 
+            sleep(0.2) 
             self.assertEqual(rtcom["test.device"]["binary_data"],bytes([1,2,3,4]))
         
     def test_build_message_yaml(self):
@@ -53,7 +53,7 @@ class TestRealTimeCommunication(unittest.TestCase):
         with RealTimeCommunication("test.device") as rtcom:
             big_message = bytearray(os.urandom(60000)) 
             rtcom.broadcast_endpoint("image_data", big_message, encoding="binary")
-            sleep(0.1)
+            sleep(1)
             self.assertEqual(len(rtcom["test.device"]["image_data"]),60000)
 
 
