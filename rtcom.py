@@ -96,16 +96,16 @@ class RealTimeCommunication:
 
         self.endpoints = {}
         self.subscriptions = {}
+        self.subscribers = {}
+
         self.heartbeat=0
+        self.write = True
+        self.devices = {}
 
         if listen:
             self.listen_thread = RealTimeCommunicationListener(self)
             self.listen_thread.start()
-        self.devices = {}
-
-        #self.writer_thread = RealTimeCommunicationWriter(self)
-        #self.writer_thread.start()
-
+        
     def __getitem__(self, key):
         return self.listen_thread.devices[key]
 
@@ -124,8 +124,6 @@ class RealTimeCommunication:
     def broadcast(self, packets, port=5999, addr=None):
         sock = socket.socket(socket.AF_INET, # Internet
                              socket.SOCK_DGRAM) # UDP
-        #encoded_message = yaml.dump(message)
-        #data = encoded_message.encode('utf-8')
         if addr is None:
             addr= "255.255.255.255"
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -138,15 +136,24 @@ class RealTimeCommunication:
             self.subscriptions[target_device]={}
         self.subscriptions[target_device][endpoint] = True
 
+    def get_subscribers(self):
+        subscribers = []
+        for device_name in self.listen_thread.devices:
+            device = self.listen_thread.devices[device_name]
+            if self.device_name in device["meta"]["subscribtions"]:
+                subscribtions = device["meta"]["subscribtions"][self.device_name]
+                for endpoint in subscribtions:
+                    subscribers.append((endpoint, device_name))
+        return subscribers
+
     #def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
     def _broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
-        
-        
         if endpoint not in self.endpoints:
             self.endpoints[endpoint]=0
         else:
             self.endpoints[endpoint]+=1
         packets = build_message(self.device_name, endpoint, data, encoding, id=self.endpoints[endpoint])
+
         self.broadcast(packets, addr=addr)
         #for packet in packets:
         #    self.broadcast(packet)
@@ -197,16 +204,27 @@ class RealTimeCommunicationListener(threading.Thread):
         self.miss_counter=0
         self.rtcom = rtcom
         self.devices = {}
+        self.heartbeat=0
         
+    def write(self):
+        try:
+            while(True):
+                next_message = self.rtcom.message_queue.get_nowait()
+                self.rtcom._broadcast_endpoint(*next_message)
+        except queue.Empty:
+            #Broadcast device metadata.
+            #TODO: Refactor
+            meta = {}
+            meta["heartbeat"] = self.heartbeat
+            meta["subscribtions"] = self.rtcom.subscriptions
+            self.rtcom.broadcast_endpoint("meta",meta)
 
     def run(self):
         while self.enabled:
-            try:
-                while(True):
-                    next_message = self.rtcom.message_queue.get_nowait()
-                    self.rtcom._broadcast_endpoint(*next_message)
-            except queue.Empty:
-                pass
+            self.heartbeat+=1
+            self.rtcom.get_subscribers()
+            if self.rtcom.write:
+                self.write()
             try:
                 data, addr = self.sock.recvfrom(1500) # buffer size is 1024 bytes
                 #print(data,addr)

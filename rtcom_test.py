@@ -11,10 +11,20 @@ class TestRealTimeCommunication(unittest.TestCase):
         
     def test_timeout(self):
         with RealTimeCommunication() as rtcom:
+            rtcom.write=False
             initial_miss = rtcom.listen_thread.miss_counter
             sleep(1)
             self.assertGreater(rtcom.listen_thread.miss_counter,initial_miss)
 
+    def test_subscriptions(self):
+        with RealTimeCommunication("test.device") as rtcom:
+            rtcom.subscribe("test.device", "video_feed")
+            sleep(0.1)
+            subscribers = rtcom.get_subscribers()
+            self.assertEqual(len(subscribers),1)
+            self.assertEqual(subscribers[0][0], "video_feed")
+            self.assertEqual(subscribers[0][1], "test.device")
+            
     def test_device_message(self):
         with RealTimeCommunication("test.device") as rtcom:
             rtcom.broadcast_endpoint("heartbeat", 10)
