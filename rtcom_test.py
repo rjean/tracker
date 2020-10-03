@@ -22,8 +22,7 @@ class TestRealTimeCommunication(unittest.TestCase):
             sleep(0.1)
             subscribers = rtcom.get_subscribers()
             self.assertEqual(len(subscribers),1)
-            self.assertEqual(subscribers[0][0], "video_feed")
-            self.assertEqual(subscribers[0][1], "test.device")
+            self.assertEqual(subscribers["video_feed"], "test.device")
             
     def test_device_message(self):
         with RealTimeCommunication("test.device") as rtcom:
