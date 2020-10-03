@@ -4,6 +4,8 @@ import yaml
 import socket
 import time
 import re
+from threading import Thread
+import queue
 
 def read_raw_message(data):
     for i in range(len(data)):
@@ -11,8 +13,8 @@ def read_raw_message(data):
             return data[0:i].decode("utf-8"), data[i+1:]
     raise ValueError("Unable to find the end of line")
 
-def read_message(data):
-    header, data = read_raw_message(data)
+def read_message(raw_data):
+    header, data = read_raw_message(raw_data)
     #'device/endpoint:encoding:id:sequence'
     match = re.search("(.*?)/(.*?):(.*?):(.*?):(.*?):(.*)", header)
     device = match[1]
@@ -22,8 +24,10 @@ def read_message(data):
     sequence = match[5]
     max_sequence = match[6]
     if encoding=="yaml":
-        data = yaml.load(data.decode("utf-8"))
-    return device, endpoint, data, encoding, int(id), int(sequence), int(max_sequence)
+        decoded_data = yaml.load(data.decode("utf-8"))
+    else:
+        decoded_data = data
+    return device, endpoint, decoded_data, encoding, int(id), int(sequence), int(max_sequence)
 
 def build_message(device_name, endpoint, data, encoding, id=0, max_size=1000):
     messages = []
@@ -86,7 +90,9 @@ class RealTimeCommunication:
             addr = "127.0.0.1"
 
         self.listen=listen
+        
         self.this_device = Device(self.device_name, addr)
+        self.message_queue = queue.Queue()
 
         self.endpoints = {}
         self.subscriptions = {}
@@ -96,6 +102,9 @@ class RealTimeCommunication:
             self.listen_thread = RealTimeCommunicationListener(self)
             self.listen_thread.start()
         self.devices = {}
+
+        #self.writer_thread = RealTimeCommunicationWriter(self)
+        #self.writer_thread.start()
 
     def __getitem__(self, key):
         return self.listen_thread.devices[key]
@@ -130,6 +139,9 @@ class RealTimeCommunication:
         self.subscriptions[target_device][endpoint] = True
 
     def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
+    def _broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
+        
+        
         if endpoint not in self.endpoints:
             self.endpoints[endpoint]=0
         else:
@@ -138,13 +150,36 @@ class RealTimeCommunication:
         self.broadcast(packets, addr=addr)
         #for packet in packets:
         #    self.broadcast(packet)
+
+    def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None, synchronous=False):
+        if not synchronous:
+            self.message_queue.put((endpoint, data, encoding, addr))
+        else:
+            self._broadcast_endpoint(endpoint, data, encoding, addr)
+        #thread = Thread(target = self._broadcast_endpoint, args = (endpoint, data, encoding, addr))
+        #thread.start()
+        #if synchronous: #Mainly for unit testing.
+        #    thread.join()
+
         
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.listen:
             self.listen_thread.enabled=False
             self.listen_thread.join()
+            #self.writer_thread.enabled=False
+            #self.writer_thread.join()
 
+class RealTimeCommunicationWriter(threading.Thread):
+    def __init__(self, rtcom):
+        threading.Thread.__init__(self)
+        self.rtcom = rtcom
+        self.enabled=True
+
+    def run(self):
+        while(self.enabled):
+            next_message = self.rtcom.message_queue.get()
+            self.rtcom._broadcast_endpoint(*next_message)
 
 class RealTimeCommunicationListener(threading.Thread):
     def __init__(self, rtcom, port=5999, hostname=None):
@@ -155,7 +190,8 @@ class RealTimeCommunicationListener(threading.Thread):
         self.sock = socket.socket(socket.AF_INET, # Internet
                              socket.SOCK_DGRAM) # UDP
         self.sock.bind((UDP_IP, port))
-        self.sock.settimeout(0.1)
+        self.sock.setblocking(False)
+        self.sock.settimeout(0.01)
         self.data_dict=None
         self.enabled=True
         self.miss_counter=0
@@ -166,7 +202,14 @@ class RealTimeCommunicationListener(threading.Thread):
     def run(self):
         while self.enabled:
             try:
+                while(True):
+                    next_message = self.rtcom.message_queue.get_nowait()
+                    self.rtcom._broadcast_endpoint(*next_message)
+            except queue.Empty:
+                pass
+            try:
                 data, addr = self.sock.recvfrom(1500) # buffer size is 1024 bytes
+                #print(data,addr)
                 device, endpoint, data, encoding, id, sequence, max_sequence = read_message(data)
                 if device not in self.devices:
                     self.devices[device] = Device(device, addr)
@@ -202,6 +245,7 @@ class RealTimeCommunicationListener(threading.Thread):
                        
                 self.miss_counter=0
                 #print(f"{device}, {endpoint}, {encoding}, {id},{sequence}, {max_sequence}")
-            except:
+            except socket.timeout:
                 self.miss_counter+=1
+                time.sleep(0.01)
         self.sock.close()
