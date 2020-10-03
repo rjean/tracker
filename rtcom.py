@@ -138,7 +138,7 @@ class RealTimeCommunication:
             self.subscriptions[target_device]={}
         self.subscriptions[target_device][endpoint] = True
 
-    def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
+    #def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
     def _broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
         
         
