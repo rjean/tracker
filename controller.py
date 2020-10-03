@@ -25,7 +25,9 @@ def draw_and_broadcast(image, objs, labels, rtcom):
 
     rtcom.broadcast_endpoint("jpeg_image", bytes(jpg_image), encoding="binary")
 
-draw_broadcast_queue = queue.Queue()
+from collections import deque
+
+draw_broadcast_queue = deque(maxlen=1)
 
 class DrawAndBroadcastThread(threading.Thread):
     def __init__(self):
@@ -33,8 +35,12 @@ class DrawAndBroadcastThread(threading.Thread):
 
     def run(self):
         while True:
-            args =  draw_broadcast_queue.get()
-            draw_and_broadcast(*args)
+            try:
+                args =  draw_broadcast_queue.pop()
+                draw_and_broadcast(*args)
+            except:
+                time.sleep(0.05)
+                
 
 with RealTimeCommunication("turret.local") as rtcom:
     beat=0
@@ -111,7 +117,7 @@ with RealTimeCommunication("turret.local") as rtcom:
         if abs(horizontal_error) > hysteresis:        
             horizontal_angle = horizontal_angle + P*horizontal_error + D*delta_horizontal_error
 
-        draw_broadcast_queue.put((image, objs, labels, rtcom))
+        draw_broadcast_queue.append((image, objs, labels, rtcom))
 
         data["Broadcast time"] = ((time.perf_counter()-start)*1000, "ms")
         start = time.perf_counter()
