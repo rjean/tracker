@@ -48,3 +48,15 @@ python3 server.py&
 # AI 
 curl -OL "https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite"
 
+# Run at startup
+See https://www.tomshardware.com/how-to/run-script-at-boot-raspberry-pi
+
+Edit crontab for the user:
+```
+pi@turret:~ $ crontab -e
+```
+
+And add that line:
+```
+@reboot bash /home/pi/follower/start.sh > /home/pi/follower/start.log 2>&1
+```

@@ -26,8 +26,8 @@ def draw_and_broadcast(pil_frame, objs, labels, rtcom):
 
 with RealTimeCommunication("turret.local") as rtcom:
     beat=0
-    P = 0.04
-    D = 0.04
+    P = 0.05
+    D = 0.05
     cap = VideoCapture(0)
     #cap.set(cv2.CAP_PROP_BUFFERSIZE,3)
 
@@ -82,7 +82,7 @@ with RealTimeCommunication("turret.local") as rtcom:
         data["Inference time"] = ((time.perf_counter()-start)*1000, "ms")
         start = time.perf_counter()
 
-        print(objs)
+       # print(objs)
         
         center_v = 240
         center_h = 320
@@ -117,6 +117,7 @@ with RealTimeCommunication("turret.local") as rtcom:
         #    frame = np.array(pil_frame)
         #    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         thread = Thread(target = draw_and_broadcast, args = (pil_frame, objs, labels, rtcom))
+        thread.start()
 
         data["Broadcast time"] = ((time.perf_counter()-start)*1000, "ms")
         start = time.perf_counter()

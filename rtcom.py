@@ -199,7 +199,7 @@ class RealTimeCommunicationListener(threading.Thread):
                 pass
             try:
                 data, addr = self.sock.recvfrom(1500) # buffer size is 1024 bytes
-                print(data,addr)
+                #print(data,addr)
                 device, endpoint, data, encoding, id, sequence, max_sequence = read_message(data)
                 if device not in self.devices:
                     self.devices[device] = Device(device, addr)
