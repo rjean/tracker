@@ -143,8 +143,10 @@ class RealTimeCommunication:
             if "meta" in device and self.device_name in device["meta"]["subscribtions"]:
                 subscribtions = device["meta"]["subscribtions"][self.device_name]
                 for endpoint in subscribtions:
-                    subscribers[endpoint] = device_name
-        return subscribers
+                    subscribers[endpoint] = []
+                    subscribers[endpoint].append(device_name)
+        self.subscribers = subscribers
+        return self.subscribers
 
     #def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
     def _broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
@@ -156,7 +158,7 @@ class RealTimeCommunication:
 
         if endpoint in self.subscribers:
             for device_name in self.subscribers[endpoint]:
-                addr= self.devices[device_name].addr
+                addr= self.listen_thread.devices[device_name].addr[0]
                 self.broadcast(packets, addr=addr)
         else:
             self.broadcast(packets)
