@@ -12,6 +12,8 @@ with RealTimeCommunication("pc") as rtcom:
     horizontal_angle=0
     vertical_angle=0
     i=0
+    rtcom.subscribe("turret.local","jpeg_image") #Request unicast for this specific endpoint.
+    #(Too much packet drop on multicast for some reason.)
     while True:
         i+=1
         try:
