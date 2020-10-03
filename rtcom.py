@@ -140,7 +140,7 @@ class RealTimeCommunication:
         subscribers = {}
         for device_name in self.listen_thread.devices:
             device = self.listen_thread.devices[device_name]
-            if self.device_name in device["meta"]["subscribtions"]:
+            if "meta" in device and self.device_name in device["meta"]["subscribtions"]:
                 subscribtions = device["meta"]["subscribtions"][self.device_name]
                 for endpoint in subscribtions:
                     subscribers[endpoint] = device_name
@@ -210,6 +210,7 @@ class RealTimeCommunicationListener(threading.Thread):
         self.rtcom = rtcom
         self.devices = {}
         self.heartbeat=0
+        self.last_meta_timestamp=0
         
     def write(self):
         try:
@@ -222,7 +223,9 @@ class RealTimeCommunicationListener(threading.Thread):
             meta = {}
             meta["heartbeat"] = self.heartbeat
             meta["subscribtions"] = self.rtcom.subscriptions
-            self.rtcom.broadcast_endpoint("meta",meta)
+            if time.time() > self.last_meta_timestamp+0.1:
+                self.rtcom.broadcast_endpoint("meta",meta)
+                self.last_meta_timestamp = time.time()
 
     def run(self):
         while self.enabled:
