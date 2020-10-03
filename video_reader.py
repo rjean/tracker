@@ -11,7 +11,9 @@ def write_line(image, line_number, text):
 with RealTimeCommunication("pc") as rtcom:
     horizontal_angle=0
     vertical_angle=0
+    i=0
     while True:
+        i+=1
         try:
             if rtcom["turret.local"]["jpeg_image"] is not None:
                 jpg_data = np.asarray(rtcom["turret.local"]["jpeg_image"])
@@ -19,11 +21,11 @@ with RealTimeCommunication("pc") as rtcom:
                 write_header(img, "Video Feed")
                 perf = rtcom["turret.local"]["perf"]
                 data = rtcom["turret.local"]["data"]
-                for i, name in enumerate(perf):
-                    write_line(img, i, f"{name} : {perf[name]*1000:0.1f}")
+                #for i, name in enumerate(perf):
+                #    write_line(img, i, f"{name} : {perf[name]*1000:0.1f}")
 
                 for i, name in enumerate(data):
-                    write_line(img, i+10, f"{name} : {data[name]:0.1f}")                
+                    write_line(img, i, f"{name} : {data[name][0]:0.1f} {data[name][1]}")                
                 
                 cv2.imshow("preview", img) 
             key = cv2.waitKey(20)
@@ -43,8 +45,8 @@ with RealTimeCommunication("pc") as rtcom:
                 vertical_angle-=1
             if key=="s":
                 vertical_angle+=1
-            
-            rtcom.broadcast_endpoint("coordinates",{"horizontal_angle" : horizontal_angle, 
+            if i%10==0:
+                rtcom.broadcast_endpoint("coordinates",{"horizontal_angle" : horizontal_angle, 
                                                     "vertical_angle": vertical_angle })
             if key==27:
                 break

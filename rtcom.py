@@ -89,6 +89,9 @@ class RealTimeCommunication:
         self.this_device = Device(self.device_name, addr)
 
         self.endpoints = {}
+        self.subscriptions = {}
+        self.heartbeat=0
+
         if listen:
             self.listen_thread = RealTimeCommunicationListener(self)
             self.listen_thread.start()
@@ -120,6 +123,11 @@ class RealTimeCommunication:
         for data in packets:
             sock.sendto(data, (addr, port))
         sock.close()
+
+    def subscribe(self, target_device, endpoint):
+        if target_device not in self.subscriptions:
+            self.subscriptions[target_device]={}
+        self.subscriptions[target_device][endpoint] = True
 
     def broadcast_endpoint(self, endpoint, data, encoding="yaml", addr=None):
         if endpoint not in self.endpoints:
@@ -153,6 +161,7 @@ class RealTimeCommunicationListener(threading.Thread):
         self.miss_counter=0
         self.rtcom = rtcom
         self.devices = {}
+        
 
     def run(self):
         while self.enabled:
