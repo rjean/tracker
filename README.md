@@ -12,38 +12,22 @@ sudo systemctl enable pigpiod
 ```
 
 # Architecture
+## Communication
+A custom built "rtcom" library is used for communication.
+
 ## User Interface
-The basic UI is to be done via WebSockets. A static HTML page is served using NGINX
+The UI is handle by the video_reader.py file. It should be run on a PC, not on the raspberry pi.
 
 ```
-sudo apt install nginx
-```
-We need to make the "www" subfolder available to NGINX. 
-```
-sudo rm /var/www/html/
-sudo rmdir /var/www/html/
-sudo ln -s www /var/www/html
+python video_reader.py
 ```
 
 # Camera
-## First-time setup.
-Make sure the pistreaming module has been properly imported:
-```
-git submodule init
-git submodule update
-```
 Make sure the camera is enabled:
 ````
 sudo raspi-config
 interfacing options->camera->enable the camera
 ````
-
-To start the camera, ising pistreaming:
-
-```
-cd pistreamingls
-python3 server.py&
-``
 
 # AI 
 curl -OL "https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite"
@@ -59,4 +43,10 @@ pi@turret:~ $ crontab -e
 And add that line:
 ```
 @reboot bash /home/pi/follower/start.sh > /home/pi/follower/start.log 2>&1
+```
+
+# Starting the controller.
+On the raspberry pi, run 
+``` 
+python3 controller.py
 ```
