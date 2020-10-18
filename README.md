@@ -1,7 +1,9 @@
 # Tracker
-Small hobby project for a device that can track things using a pan tilt system using the RaspberryPI.
+Small hobby project for an autonomous embedded device that can track things using a pan tilt system using the RaspberryPI.
 
-The idea is to be able to build a unofficial "Portal Sentry Turret: https://theportalwiki.com/wiki/Sentry_Turret".
+The idea behind that is to be able to build a unofficial "Portal Sentry Turret: https://theportalwiki.com/wiki/Sentry_Turret".
+
+![Tracking GIF](media/tracking_demo.gif)
 
 # Setup.
 Install the required packages:
