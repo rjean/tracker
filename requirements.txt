@@ -2,3 +2,4 @@ pigpio>=1.44
 numpy>=1.16.2
 websockets
 ws4py
+rtcom
