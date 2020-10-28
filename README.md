@@ -5,6 +5,8 @@ The idea behind that is to be able to build a unofficial "Portal Sentry Turret: 
 
 ![Tracking GIF](media/tracking_demo.gif)
 
+[There is a little bit of information in my blog about this project](http://www.raphaeljean.com/index.php/2020/10/28/autonomous-tracking-turret-using-coral-ai-usb-accelerator/)
+
 # Setup.
 Install the required packages:
 
