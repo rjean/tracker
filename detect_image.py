@@ -55,11 +55,7 @@ def load_labels(path, encoding='utf-8'):
 def make_interpreter(model_file):
   model_file, *device = model_file.split('@')
   return tflite.Interpreter(
-      model_path=model_file,
-      experimental_delegates=[
-          tflite.load_delegate(EDGETPU_SHARED_LIB,
-                               {'device': device[0]} if device else {})
-      ])
+      model_path=model_file)
 
 
 def draw_objects(draw, objs, labels):

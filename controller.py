@@ -48,7 +48,7 @@ with RealTimeCommunication("turret.local") as rtcom:
     D = 0.05
     cap = VideoCapture(0)
 
-    interpreter = make_interpreter("weights/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite")
+    interpreter = make_interpreter("yolov8n_integer_quant.tflite")
     interpreter.allocate_tensors()
 
     draw_thread = DrawAndBroadcastThread()
