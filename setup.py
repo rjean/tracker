@@ -7,6 +7,8 @@ setup(
     install_requires=[
         'tflite-runtime',  # Tensorflow Lite Runtime
         'opencv-python',  # OpenCV2 for Python
+        'rtcom', # Real-time communication abstraction
+        'pyyaml'
     ],
     author='Raphael Jean',  # Replace with your name
     author_email='raphael.jean@rocketmail.com',  # Replace with your email
