@@ -3,9 +3,9 @@ import time
 import cv2
 
 from rtcom import RealTimeCommunication
-import pantilt
-from detect_image import make_interpreter, draw_objects, load_labels
-import detect
+import turret.pantilt as pantilt
+from turret.detect_image import make_interpreter, draw_objects, load_labels
+import turret.detect as detect
 from PIL import Image, ImageDraw
 import numpy as np
 from threading import Thread

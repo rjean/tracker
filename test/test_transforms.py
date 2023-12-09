@@ -1,9 +1,9 @@
-import pantilt
+import turret.pantilt as pantilt
 from time import sleep
 import unittest
 import math
 import numpy as np
-import transform
+import turret.transform as transform
 import psutil
 
 #Test for coordinates transformations. 
